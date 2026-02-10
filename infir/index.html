@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Infirmerie</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+         :root {
+            --bleu-full: #539EFF;
+            --bleu-moyen: #A9CEFF;
+            --bleu-clair: #DCEBFF;
+            --blanc: #FFFFFF;
+            --noir: #000000;
+        }
+        .badge-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+
+<body class="h-full bg-gray-50 font-sans antialiased">
+
+    <div class="flex h-full">
+
+        <!-- Sidebar corrigée : logo + menu complet -->
+        <aside class="hidden md:flex md:flex-col md:w-64 bg-[var(--bleu-full)] text-white shadow-xl">
+            <!-- Logo + titre -->
+            <div class="p-5 flex items-center gap-3 border-b border-blue-400/40 bg-blue-700/20">
+                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white text-2xl shadow">
+                    <i class="fas fa-heartbeat"></i>
+                    <!-- Logo cœur battant / stéthoscope-like -->
+                </div>
+                <span class="text-2xl font-bold">INFIRMERIE</span>
+            </div>
+
+            <nav class="flex-1 px-3 py-6 space-y-1">
+                <a href="#" class="flex items-center px-4 py-3 bg-blue-800/40 rounded-lg font-medium">
+                    <i class="fas fa-home mr-3 w-5"></i> Accueil
+                </a>
+                <a href="#" class="flex items-center px-4 py-3 hover:bg-blue-700/40 rounded-lg transition">
+                    <i class="fas fa-boxes-stacked mr-3 w-5"></i> Gestion de stock
+                </a>
+                <a href="#" class="flex items-center px-4 py-3 hover:bg-blue-700/40 rounded-lg transition">
+                    <i class="fas fa-chart-line mr-3 w-5"></i> Rapports
+                </a>
+                <a href="#" class="flex items-center px-4 py-3 hover:bg-blue-700/40 rounded-lg transition">
+                    <i class="fas fa-folder-medical mr-3 w-5"></i> Dossiers élèves
+                </a>
+                <a href="#" class="flex items-center px-4 py-3 hover:bg-blue-700/40 rounded-lg transition">
+                    <i class="fas fa-history mr-3 w-5"></i> Historique
+                </a>
+            </nav>
+
+            <div class="p-4 text-xs text-blue-200 border-t border-blue-400/30">
+                Version 1.0 • © 2026
+            </div>
+        </aside>
+
+        <!-- Contenu principal -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b border-[var(--bleu-clair)] sticky top-0 z-30">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+                    <h1 class="text-2xl font-bold text-[var(--noir)]">Dashboard</h1>
+                    <div class="flex items-center gap-4">
+                        <span class="text-gray-700">Bonjour Nadine</span>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-[var(--bleu-clair)] flex items-center justify-center text-[var(--bleu-full)] font-bold shadow border-2 border-[var(--bleu-moyen)]">
+                                AN
+                            </div>
+                            <span class="font-medium text-[var(--noir)]">Abena N.</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Contenu scrollable -->
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="max-w-7xl mx-auto">
+
+                    <!-- Cartes stats -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+                        <div class="bg-white p-6 rounded-xl shadow border border-[var(--bleu-clair)]">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600">Total élèves</p>
+                                    <p class="text-4xl font-bold text-[var(--bleu-full)] mt-1">100</p>
+                                </div>
+                                <div class="w-14 h-14 bg-[var(--bleu-clair)] rounded-full flex items-center justify-center text-[var(--bleu-full)]">
+                                    <i class="fas fa-users text-2xl"></i>
+                                </div>
+                            </div>
+                            <p class="text-sm text-green-600 mt-2">+2 ce mois</p>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow border border-[var(--bleu-clair)]">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600">Consultations aujourd'hui</p>
+                                    <p class="text-4xl font-bold text-green-600 mt-1">5</p>
+                                </div>
+                                <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                                    <i class="fas fa-stethoscope text-2xl"></i>
+                                </div>
+                            </div>
+                            <p class="text-sm text-green-600 mt-2">+1 vs hier</p>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow border border-[var(--bleu-clair)]">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600">En attente</p>
+                                    <p class="text-4xl font-bold text-orange-600 mt-1">2</p>
+                                </div>
+                                <div class="w-14 h-14 bg-orange-100 rounded-full flex items-center justify-center text-orange-600">
+                                    <i class="fas fa-clock text-2xl"></i>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-2">À traiter rapidement</p>
+                        </div>
+                    </div>
+
+                    <!-- Section Dernières consultations -->
+                    <div class="bg-white p-6 rounded-xl shadow border border-[var(--bleu-clair)] mb-8">
+                        <h2 class="text-xl font-semibold mb-4">Dernières consultations</h2>
+                        <p class="text-gray-500">Aucune consultation récente pour le moment... (ajoute des données quand prêt)</p>
+                    </div>
+
+                    <!-- Section Historique (exemple simple, tu peux développer) -->
+                    <div class="bg-white p-6 rounded-xl shadow border border-[var(--bleu-clair)]">
+                        <h2 class="text-xl font-semibold mb-4">Historique récent</h2>
+                        <p class="text-gray-500">Aucun historique détaillé pour le moment...</p>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+</body>
+
+</html>
