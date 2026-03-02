@@ -1,0 +1,279 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des Consultatuions</title>
+    <style>
+        
+.form-header {
+  display: flex;
+  justify-content: space-between; 
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #FFFFFF;
+}
+
+.header-item img {
+  height: 30px;
+  width: auto;
+}
+ 
+.center img {
+  height: 80px; 
+}
+
+
+.retour {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.retour-text {
+  color: #539EFF; 
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 20px;
+}
+
+
+.form-title {
+  text-align: center;
+  color: #539EFF;
+  font-size: 30px;
+  margin: 15px 0;
+  font-weight: 700;
+}
+
+
+
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        thead tr {
+            background-color:rgba(83, 158, 255, 0.2) ;
+            color: #000000;
+            font-style: italic;
+        }
+        thead th {
+            padding: 14px 16px;
+            text-align: left;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        thead th span.tri img {
+            margin-left: 6px;
+            font-size: 10px;
+            width: 35px;
+            height: 15px;
+            margin-bottom: -5px;
+        }
+
+        tbody tr {
+            border-bottom: 2px solid #539EFF;
+        }
+        tbody tr:hover {
+            background: #f0f4ff;
+        }
+        tbody td {
+            padding: 12px 16px;
+        }
+        .btn-voir, .btn-modifier {
+            border: 5px solid #539EFF;
+            background: white;
+            color: #539EFF;
+            font-weight: bold;
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 13px;
+            border: 2px solid #539EFF;
+        }
+
+        .btn-voir:hover,.btn-modifier:hover {
+            background: #e8f0fd;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+        .message {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+<div class="form-container">
+
+<header class="form-header">
+  <!-- Bloc retour -->
+  <div class="header-item retour">
+    <img src="retour.png" alt="Retour" style="cursor: pointer;" onclick="window.location.href='consultation.php'">
+    <span class="retour-text">RETOUR</span>
+  </div>
+
+  <!-- Icône centrale -->
+  <div class="header-item center">
+    <img src="liste.png" alt="Consultation">
+  </div>
+
+  <!-- Menu hamburger -->
+  <div class="header-item menu">
+    <img src="menu.png" alt="Menu">
+  </div>
+</header>
+
+<!-- Titre -->
+<h1 class="form-title">FORMULAIRE DE CONSULTATION</h1>
+
+    <div id="filtre-motif" style="margin:10px 0;"></div>
+
+    <div class="table-container">
+        <table id="tableau-consultations">
+            <thead>
+                <tr>
+                    <th onclick="trierDate()">Date <span class="tri"><img src="Polygon 5.png" alt=""></span></th>
+                   <th onclick="trierFiliere()">Filière <span class="tri"><img src="Polygon 5.png" alt=""></span></th>
+                    <th onclick="trierMotif()">Motif <span class="tri"><img src="Polygon 5.png" alt=""></span></th>
+                    <th onclick="trierEtudiant()">Etudiant <span class="tri"><img src="Polygon 5.png" alt=""></span></th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="corps-tableau">
+                <tr><td colspan="5" class="message">Chargement...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+document.addEventListener('DOMContentLoaded', () => {
+    chargerConsultations();
+});
+
+// Charger toutes les consultations
+function chargerConsultations(params = '') {
+    fetch('listeConsultation.php' + params)
+        .then(res => res.json())
+        .then(data => afficherTableau(data))
+        .catch(() => {
+            document.getElementById('corps-tableau').innerHTML =
+              '<tr><td colspan="5" class="message">Erreur de chargement</td></tr>';
+        });
+}
+
+// Afficher le tableau
+function afficherTableau(data) {
+    const tbody = document.getElementById('corps-tableau');
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="message">Aucune consultation trouvée</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.map(c => `
+        <tr>
+          <td>${c.dateConsultation}</td>
+          <td>${c.filiere}</td>
+          <td>${c.motif}</td>
+          <td>${c.etudiant}</td>
+          <td>
+            <button class="btn-voir" onclick="voirDetails(${c.idConsultation})">Voir détails</button>
+          </td>
+        </tr>
+    `).join('');
+}
+
+// Redirection vers la page de détails
+function voirDetails(id) {
+    window.location.href = 'detailConsultation.php?id=' + id;
+}
+
+// --- Gestion des filtres via polygone ---
+function trierFiliere() {
+    // Exemple : afficher une liste des filières
+    const filiere = prompt("Entrez la filière :");
+    if (!filiere) return;
+    chargerConsultations('?filiere=' + encodeURIComponent(filiere));
+}
+
+function trierEtudiant() {
+    const nom = prompt("Entrez le nom de l'étudiant :");
+    if (!nom) return;
+    chargerConsultations('?etudiant=' + encodeURIComponent(nom));
+}
+
+// --- Tri par date ---
+function trierDate() {
+    // Ici on demande à l’API de renvoyer les consultations triées par date
+    chargerConsultations('?orderBy=dateConsultation');
+}
+
+// --- Tri par motif ---
+function trierMotif() {
+    // Ici on demande à l’API de renvoyer les consultations triées par motif
+    chargerConsultations('?orderBy=motif');
+}
+
+// Filtre par date (avec calendrier HTML)
+function trierDate() {
+    const div = document.getElementById('filtre-motif'); // réutiliser le même conteneur
+    div.innerHTML = '';
+
+    const input = document.createElement('input');
+    input.type = 'date';
+
+    input.onchange = () => {
+        if (input.value) {
+            chargerConsultations('?date=' + encodeURIComponent(input.value));
+        }
+    };
+
+    div.appendChild(input);
+    input.focus();
+}
+
+// Filtre par motif (liste depuis la BD)
+function trierMotif() {
+    fetch('motifs.php')
+      .then(res => res.json())
+      .then(motifs => {
+          const div = document.getElementById('filtre-motif');
+          div.innerHTML = ''; // nettoyer avant
+
+          const select = document.createElement('select');
+          select.innerHTML = '<option value="">-- Choisir un motif --</option>';
+
+          motifs.forEach(m => {
+              const opt = document.createElement('option');
+              opt.value = m;
+              opt.textContent = m;
+              select.appendChild(opt);
+          });
+
+          select.onchange = () => {
+              if (select.value) {
+                  chargerConsultations('?motif=' + encodeURIComponent(select.value));
+              }
+          };
+
+          div.appendChild(select);
+          select.focus();
+      });
+}
+
+</script>
+
+</body>
+</html>
+

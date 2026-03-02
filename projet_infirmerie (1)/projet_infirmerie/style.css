@@ -1,0 +1,260 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f5f1ea;
+    display: flex;
+    justify-content: center;
+    align-items: center;    
+    height: 100vh;
+    margin: 0;              
+}
+
+.container {
+    width: 100%;
+    max-width: 500px;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+.login-box {
+    background: #fff;
+    padding: 30px 20px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 500px;
+}
+
+.logo {
+    width: 80px;
+    margin-bottom: 15px;
+}
+
+.login-box h2 {
+    color: #4a90ff;
+    margin-bottom: 25px;
+}
+
+label {
+    display: block;
+    text-align: left;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 6px;
+    border: 1px solid #F6FAFE;
+    box-sizing: border-box;
+}
+
+button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 12px;
+    border: none;
+    border-radius: 20px;
+    background: #4a90ff;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #357ae8;
+}
+
+.error {
+    color: red;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family: Arial, sans-serif;
+    background:#eef2ff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+/* Conteneur global comme ton cadre */
+.wrapper{
+    width:95%;
+    max-width:1100px;
+    background:white;
+    border-radius:20px;
+    padding:20px 30px 30px 30px;
+    box-shadow:0 0 10px rgba(0,0,0,0.08);
+}
+
+/* Barre du haut */
+.header{
+    display:grid;
+    grid-template-columns:1fr 2fr 1fr;
+    align-items:center;
+}
+
+/* Retour à gauche */
+.retour{
+    font-family: 'Roboto', sans-serif;
+    text-decoration:none;
+    color:#3b82f6;
+    font-weight:400;
+}
+
+/* Centre : avatar + titre */
+.center-title{
+    text-align:center;
+}
+
+.avatar{
+    margin-bottom:5px;
+}
+
+.avatar img{
+    width:70px;
+}
+
+/* Titre comme sur l'image */
+.center-title h2{
+    font-family: 'Roboto', sans-serif;
+    color:#3b82f6;
+    font-weight:700;
+}
+
+/* Hamburger à droite */
+.hamburger{
+    justify-self:end;
+    cursor:pointer;
+}
+
+.hamburger span{
+    display:block;
+    width:28px;
+    height:3px;
+    background:#3b82f6;
+    margin:5px 0;
+}
+
+/* Menu déroulant */
+.menu{
+    display:none;
+    position:absolute;
+    right:50px;
+    top:90px;
+    background:white;
+    box-shadow:0 0 10px rgba(0,0,0,0.1);
+    border-radius:10px;
+}
+
+.menu a{
+    display:block;
+    padding:10px 20px;
+    text-decoration:none;
+    color:#3b82f6;
+    border-bottom:1px solid #eee;
+}
+
+.menu a:hover{
+    background:#eef2ff;
+}
+
+/* Zone du formulaire */
+.form-container{
+    margin-top:30px;
+}
+
+/* Grille 2 colonnes comme ton image */
+.grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:60px;
+}
+
+/* Champs */
+label{
+    display:block;
+    margin-top:15px;
+    font-weight:bold;
+    font-family: 'Inter', sans-serif;
+    font-style: italic;
+}
+
+input, select{
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    border:none;
+    background:#eef2ff;
+    margin-top:6px;
+    font-size:14px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.08);
+    outline:none;
+}
+
+/* Effet au focus (quand on clique dedans) */
+input:focus, select:focus{
+    box-shadow: 0px 6px 12px rgba(59, 130, 246, 0.2);
+}
+
+
+/* Boutons comme ton design */
+.buttons{
+    margin-top:25px;
+    text-align:right;
+}
+
+.terminer{
+    background:#3b82f6;
+    color:white;
+    border:none;
+    padding:10px 35px;
+    border-radius:25px;
+    font-weight:bold;
+    cursor:pointer;
+    font-family: 'Roboto', sans-serif;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.terminer:hover{
+    box-shadow: 0px 6px 12px rgba(59, 130, 246, 0.3);
+}
+
+.annuler{
+    background:white;
+    color:#3b82f6;
+    border:1px solid #3b82f6;
+    padding:10px 35px;
+    border-radius:25px;
+    cursor:pointer;
+    margin-left:10px;
+    font-family: 'Roboto', sans-serif;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.annuler:hover{
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+#message{
+    margin-top:10px;
+    font-weight:bold;
+}
+
+.icone-retour{
+    width:22px;
+    vertical-align:middle;
+    margin-right:5px;
+}
