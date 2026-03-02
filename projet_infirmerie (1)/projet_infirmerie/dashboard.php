@@ -1,41 +1,71 @@
 <?php
-// --- BACKEND COMPATIBLE ---
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
-// Initialisation
+function h($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
+
+$from = $_GET['from'] ?? date('Y-m-01');
+$to   = $_GET['to'] ?? date('Y-m-t');
+
 $totalEleves = 0;
-$consultationsJour = 0;
+$consultationsToday = 0;
+$consultationsPeriode = 0;
 $enAttente = 0;
+$lowStockCount = 0;
 $dernieresConsultations = [];
 
 try {
-    // 1. Compteur Total Élèves (Table 'etudiant')
-    $totalEleves = $pdo->query("SELECT COUNT(*) FROM etudiant")->fetchColumn();
+    $totalEleves = (int)$pdo->query("SELECT COUNT(*) FROM etudiant")->fetchColumn();
 
-    // 2. Consultations du jour (Table 'consultation', colonne 'dateConsultation')
-    // Note: Tes camarades stockent la date brute, on compare avec CURDATE()
-    $consultationsJour = $pdo->query("SELECT COUNT(*) FROM consultation WHERE DATE(dateConsultation) = CURDATE()")->fetchColumn();
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM consultation WHERE dateConsultation = CURDATE()");
+    $stmt->execute();
+    $consultationsToday = (int)$stmt->fetchColumn();
 
-    // 3. En attente (Si la colonne 'statut' n'existe pas, on met 0 par défaut pour éviter l'erreur)
-    // J'ai vu 'motif', 'diagnostic', 'traitement' dans le code de tes collègues, mais pas 'statut'.
-    // On va donc simuler ce chiffre pour l'instant ou le baser sur les consultations sans traitement.
-    $enAttente = $pdo->query("SELECT COUNT(*) FROM consultation WHERE traitement IS NULL OR traitement = ''")->fetchColumn();
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM consultation WHERE dateConsultation BETWEEN :from AND :to");
+    $stmt->execute([':from' => $from, ':to' => $to]);
+    $consultationsPeriode = (int)$stmt->fetchColumn();
 
-    // 4. Liste des dernières consultations
-    // Jointure entre 'consultation' et 'etudiant' via 'idEtudiant'
-    $sql = "SELECT c.motif, c.dateConsultation, c.traitement, 
-                   e.nom, e.prenom, e.classe 
-            FROM consultation c 
-            JOIN etudiant e ON c.idEtudiant = e.idEtudiant 
-            ORDER BY c.dateConsultation DESC LIMIT 5";
-    $stmt = $pdo->query($sql);
-    $dernieresConsultations = $stmt->fetchAll();
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*)
+        FROM consultation
+        WHERE dateConsultation BETWEEN :from AND :to
+          AND (traitement IS NULL OR traitement = '')
+    ");
+    $stmt->execute([':from' => $from, ':to' => $to]);
+    $enAttente = (int)$stmt->fetchColumn();
+
+    // Bas stock (seuil 10)
+    $lowStockCount = (int)$pdo->query("
+        SELECT COUNT(*)
+        FROM medicament
+        WHERE stockDisponible IS NOT NULL AND stockDisponible <= 10
+    ")->fetchColumn();
+
+    // 10 dernières consultations
+    $sql = "
+        SELECT
+            c.idConsultation,
+            c.dateConsultation,
+            c.motif,
+            c.diagnostic,
+            c.traitement,
+            e.matricule,
+            e.nom,
+            e.prenom,
+            e.classe,
+            i.nom AS infirmiereNom,
+            i.prenom AS infirmierePrenom
+        FROM consultation c
+        JOIN etudiant e ON e.idEtudiant = c.idEtudiant
+        JOIN infirmiere i ON i.idInfirmiere = c.idInfirmiere
+        ORDER BY c.dateConsultation DESC, c.idConsultation DESC
+        LIMIT 10
+    ";
+    $dernieresConsultations = $pdo->query($sql)->fetchAll();
 
 } catch (PDOException $e) {
     $error_msg = "Erreur SQL : " . $e->getMessage();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="fr" class="h-full">
 <head>
@@ -44,102 +74,139 @@ try {
     <title>Dashboard Infirmerie</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-         :root { --bleu-full: #539EFF; --bleu-moyen: #A9CEFF; --bleu-clair: #DCEBFF; --noir: #1F2937; }
-         .stat-card:hover { transform: translateY(-5px); transition: 0.3s; }
-    </style>
 </head>
 
 <body class="h-full bg-slate-50 font-sans text-slate-800">
+<div class="flex h-full">
 
-    <div class="flex h-full">
-        <!-- Sidebar -->
-        <aside class="hidden md:flex md:flex-col md:w-64 bg-[var(--bleu-full)] text-white shadow-xl">
-            <div class="p-6 flex items-center gap-3 border-b border-blue-400/30">
-                <i class="fas fa-heartbeat text-3xl"></i>
-                <span class="text-xl font-bold">INFIRMERIE</span>
+    <!-- Sidebar -->
+    <aside class="hidden md:flex md:flex-col md:w-64 bg-[#539EFF] text-white shadow-xl">
+        <div class="p-6 flex items-center gap-3 border-b border-blue-300/40">
+            <i class="fas fa-heartbeat text-3xl"></i>
+            <span class="text-xl font-bold">INFIRMERIE</span>
+        </div>
+
+        <nav class="flex-1 px-4 py-6 space-y-2">
+            <a href="dashboard.php" class="flex items-center px-4 py-3 bg-white/20 rounded-lg font-medium">
+                <i class="fas fa-home mr-3"></i> Dashboard
+            </a>
+
+            <a href="listeConsultation.html" class="flex items-center px-4 py-3 hover:bg-white/10 rounded-lg transition">
+                <i class="fas fa-notes-medical mr-3"></i> Consultations
+            </a>
+
+            <a href="ajouterEtudiant.html" class="flex items-center px-4 py-3 hover:bg-white/10 rounded-lg transition">
+                <i class="fas fa-user-graduate mr-3"></i> Étudiant
+            </a>
+
+            <a href="#" class="flex items-center px-4 py-3 hover:bg-white/10 rounded-lg transition" title="À implémenter">
+                <i class="fas fa-pills mr-3"></i> Stock médicament
+            </a>
+
+            <a href="rapport_general.php" class="flex items-center px-4 py-3 hover:bg-white/10 rounded-lg transition">
+                <i class="fas fa-file-pdf mr-3"></i> Rapports
+            </a>
+        </nav>
+
+        <div class="p-4 text-xs text-white/75 border-t border-white/15">
+            © <?= date('Y') ?> ISST La Sapience • Infirmerie
+        </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white shadow-sm border-b border-slate-200 h-16 flex items-center justify-between px-6">
+            <div>
+                <div class="text-xs text-slate-500">Période</div>
+                <div class="font-bold"><?= h($from) ?> → <?= h($to) ?></div>
             </div>
-            <nav class="flex-1 px-4 py-6 space-y-2">
-                <a href="#" class="flex items-center px-4 py-3 bg-white/20 rounded-lg font-medium"><i class="fas fa-home mr-3"></i> Dashboard</a>
-                <a href="#" class="flex items-center px-4 py-3 hover:bg-white/10 rounded-lg transition"><i class="fas fa-user-injured mr-3"></i> Élèves</a>
-                <a href="#" class="flex items-center px-4 py-3 hover:bg-white/10 rounded-lg transition"><i class="fas fa-notes-medical mr-3"></i> Consultations</a>
-            </nav>
-        </aside>
 
-        <!-- Main -->
-        <div class="flex-1 flex flex-col overflow-hidden">
-            <header class="bg-white shadow-sm h-16 flex items-center justify-between px-8">
-                <h1 class="text-xl font-bold text-slate-700">Vue d'ensemble</h1>
-                <div class="flex items-center gap-3">
-                    <span class="text-sm font-medium">Bienvenue, Infirmière</span>
-                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">I</div>
+            <div class="flex items-center gap-3">
+                <form method="GET" class="hidden md:flex items-end gap-2">
+                    <div>
+                        <label class="block text-xs text-slate-500">Du</label>
+                        <input type="date" name="from" value="<?= h($from) ?>" class="h-9 px-3 rounded-lg border border-slate-200 text-sm" />
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-500">Au</label>
+                        <input type="date" name="to" value="<?= h($to) ?>" class="h-9 px-3 rounded-lg border border-slate-200 text-sm" />
+                    </div>
+                    <button class="h-9 px-4 rounded-lg bg-slate-900 text-white text-sm font-semibold">Filtrer</button>
+                </form>
+
+                <a
+                    class="h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold flex items-center gap-2"
+                    href="rapport_general.php?from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
+                    target="_blank"
+                >
+                    <i class="fa-solid fa-file-arrow-down"></i> Rapport PDF
+                </a>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-6">
+            <?php if(isset($error_msg)): ?>
+                <div class="mb-6 p-4 bg-red-100 text-red-700 rounded-lg border border-red-200">
+                    <i class="fas fa-bug mr-2"></i> <?= h($error_msg) ?>
                 </div>
-            </header>
+            <?php endif; ?>
 
-            <main class="flex-1 overflow-y-auto p-8">
-                
-                <?php if(isset($error_msg)): ?>
-                    <div class="mb-6 p-4 bg-red-100 text-red-700 rounded-lg border border-red-200">
-                        <i class="fas fa-bug mr-2"></i> <?= $error_msg ?>
-                    </div>
-                <?php endif; ?>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-5 rounded-xl border">
+                    <div class="text-xs uppercase text-slate-400 font-bold">Total étudiants</div>
+                    <div class="text-3xl font-extrabold mt-2"><?= (int)$totalEleves ?></div>
+                </div>
+                <div class="bg-white p-5 rounded-xl border">
+                    <div class="text-xs uppercase text-slate-400 font-bold">Consultations aujourd'hui</div>
+                    <div class="text-3xl font-extrabold mt-2"><?= (int)$consultationsToday ?></div>
+                </div>
+                <div class="bg-white p-5 rounded-xl border">
+                    <div class="text-xs uppercase text-slate-400 font-bold">Consultations période</div>
+                    <div class="text-3xl font-extrabold mt-2"><?= (int)$consultationsPeriode ?></div>
+                </div>
+                <div class="bg-white p-5 rounded-xl border">
+                    <div class="text-xs uppercase text-slate-400 font-bold">À traiter</div>
+                    <div class="text-3xl font-extrabold mt-2"><?= (int)$enAttente ?></div>
+                </div>
+            </div>
 
-                <!-- Stats Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="stat-card bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase">Total Étudiants</p>
-                                <h3 class="text-3xl font-bold text-slate-800 mt-2"><?= $totalEleves ?></h3>
-                            </div>
-                            <div class="p-3 bg-blue-50 text-blue-500 rounded-lg"><i class="fas fa-users text-xl"></i></div>
-                        </div>
-                    </div>
+            <div class="bg-white p-5 rounded-xl border mb-6 flex items-center justify-between">
+                <div>
+                    <div class="font-bold">Alerte stock médicaments</div>
+                    <div class="text-sm text-slate-500">Stock ≤ 10</div>
+                </div>
+                <div class="text-2xl font-extrabold text-rose-600"><?= (int)$lowStockCount ?></div>
+            </div>
 
-                    <div class="stat-card bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase">Consultations Jour</p>
-                                <h3 class="text-3xl font-bold text-slate-800 mt-2"><?= $consultationsJour ?></h3>
-                            </div>
-                            <div class="p-3 bg-green-50 text-green-500 rounded-lg"><i class="fas fa-calendar-day text-xl"></i></div>
-                        </div>
-                    </div>
-
-                    <div class="stat-card bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase">À Traiter</p>
-                                <h3 class="text-3xl font-bold text-slate-800 mt-2"><?= $enAttente ?></h3>
-                            </div>
-                            <div class="p-3 bg-orange-50 text-orange-500 rounded-lg"><i class="fas fa-user-clock text-xl"></i></div>
-                        </div>
-                    </div>
+            <div class="bg-white rounded-xl border overflow-hidden">
+                <div class="px-6 py-4 border-b">
+                    <h3 class="font-bold text-slate-700">Derniers passages à l'infirmerie</h3>
                 </div>
 
-                <!-- Tableau Dernières Consultations -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-slate-100">
-                        <h3 class="font-bold text-slate-700">Derniers passages à l'infirmerie</h3>
-                    </div>
+                <?php if(empty($dernieresConsultations)): ?>
+                    <div class="p-8 text-center text-slate-400">Aucune donnée trouvée.</div>
+                <?php else: ?>
+                <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
                         <thead class="bg-slate-50 text-slate-500">
-                            <tr>
-                                <th class="px-6 py-3">Élève</th>
-                                <th class="px-6 py-3">Classe</th>
-                                <th class="px-6 py-3">Motif</th>
-                                <th class="px-6 py-3">Date</th>
-                                <th class="px-6 py-3">État</th>
-                            </tr>
+                        <tr>
+                            <th class="px-6 py-3">Date</th>
+                            <th class="px-6 py-3">Étudiant</th>
+                            <th class="px-6 py-3">Classe</th>
+                            <th class="px-6 py-3">Motif</th>
+                            <th class="px-6 py-3">État</th>
+                            <th class="px-6 py-3">Infirmier(e)</th>
+                        </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
-                            <?php foreach ($dernieresConsultations as $c): ?>
+                        <?php foreach ($dernieresConsultations as $c): ?>
                             <tr class="hover:bg-slate-50">
-                                <td class="px-6 py-3 font-medium"><?= htmlspecialchars($c['nom'] . ' ' . $c['prenom']) ?></td>
-                                <td class="px-6 py-3 text-slate-500"><?= htmlspecialchars($c['classe']) ?></td>
-                                <td class="px-6 py-3"><?= htmlspecialchars($c['motif']) ?></td>
-                                <td class="px-6 py-3 text-slate-400"><?= date('d/m H:i', strtotime($c['dateConsultation'])) ?></td>
+                                <td class="px-6 py-3 text-slate-500"><?= date('d/m/Y', strtotime($c['dateConsultation'])) ?></td>
+                                <td class="px-6 py-3 font-medium">
+                                    <?= h($c['prenom'].' '.$c['nom']) ?>
+                                    <div class="text-xs text-slate-400"><?= h($c['matricule']) ?></div>
+                                </td>
+                                <td class="px-6 py-3 text-slate-500"><?= h($c['classe']) ?></td>
+                                <td class="px-6 py-3"><?= h($c['motif']) ?></td>
                                 <td class="px-6 py-3">
                                     <?php if(empty($c['traitement'])): ?>
                                         <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-bold">À voir</span>
@@ -147,17 +214,17 @@ try {
                                         <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">Traité</span>
                                     <?php endif; ?>
                                 </td>
+                                <td class="px-6 py-3 text-slate-500"><?= h($c['infirmierePrenom'].' '.$c['infirmiereNom']) ?></td>
                             </tr>
-                            <?php endforeach; ?>
+                        <?php endforeach; ?>
                         </tbody>
                     </table>
-                    <?php if(empty($dernieresConsultations)): ?>
-                        <div class="p-8 text-center text-slate-400">Aucune donnée trouvée dans la base.</div>
-                    <?php endif; ?>
                 </div>
+                <?php endif; ?>
+            </div>
 
-            </main>
-        </div>
+        </main>
     </div>
+</div>
 </body>
 </html>
